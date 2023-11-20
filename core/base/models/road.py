@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, ForeignKey
-
+from datetime import date
 from core.base import Base
 
 if TYPE_CHECKING:
@@ -18,5 +18,6 @@ class Road(Base):
     start_point: Mapped[str] = mapped_column(String(18))
     end_point: Mapped[str] = mapped_column(String(18))
     id_driver: Mapped[int] = mapped_column(ForeignKey("driver.id_driver"))
+    date: Mapped[date]
 
     driver: Mapped["Driver"] = relationship(back_populates="road")
