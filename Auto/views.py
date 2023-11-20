@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import conint
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import Select
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 from starlette import status
 
 from Auto.schemas import SAutoWithModel
@@ -13,7 +13,8 @@ from core.base import db_helper
 from core.base.models import Auto, Model
 
 from Auto import get_auto_by_id
-from Auto import SAutoBase, SAuto, join_table
+from Auto import SAutoBase, SAuto, merge_auto_with_model
+from core.utils import unpacking_map
 
 router = APIRouter(prefix="/autos", tags=["Машиновы"])
 
@@ -54,7 +55,10 @@ async def del_auto(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 
-@router.get("/with_models", response_model=list[SAutoWithModel])
+@router.get(
+    "/with_models",
+    response_model=list[SAutoWithModel],
+)
 async def get_auto_with_models_list(
     order_field: Literal["id_auto", "capacity", "name", "vendor_country"] = "id_auto",
     session: AsyncSession = Depends(db_helper.session_dependency),
@@ -64,16 +68,8 @@ async def get_auto_with_models_list(
         if order_field in Auto.__dir__(Auto())
         else getattr(Model, order_field)
     )
-    # stmt = Select(Auto).options(joinedload(Auto.model))
-
-    if order_field in Model.__dir__(Model()):
-        stmt = Select(Auto).options(joinedload(Auto.model))
-        jnt = True  # костыль
-    else:
-        stmt = Select(Auto).options(joinedload(Auto.model)).order_by(sort_field)
-        jnt = False
+    stmt = Select(Auto, Model).join(Auto.model).order_by(sort_field)
 
     response = await session.execute(stmt)
-    autos = response.scalars().all()
-    autos = await join_table(autos, order_field, jnt)
-    return autos
+    autos = response.mappings().all()
+    return unpacking_map(autos, "Auto", "Model")

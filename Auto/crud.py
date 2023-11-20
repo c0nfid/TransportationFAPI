@@ -7,15 +7,12 @@ async def get_auto_by_id(session: AsyncSession, auto_id: int) -> Auto | None:
     return await session.get(Auto, auto_id)
 
 
-async def join_table(autos: list | None, order: str, jnt: bool):
+async def merge_auto_with_model(autos: list | None):
     result_autos = []
     for auto in autos:
-        response = SAutoModels(**auto.__dict__)
-        #response = SAutoWithModel(**auto.__dict__)
-        auto = response.model_dump()
-        auto.update(auto["model"])
-        del auto["model"]
+        model = SAuto(**auto["Auto"].__dict__)
+        model.model_dump()
+        print(model)
         result_autos.append(auto)
-    if jnt:
-        result_autos = sorted(result_autos, key=lambda d: d[order])
+
     return result_autos
