@@ -3,6 +3,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import conint
 from sqlalchemy import Select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
@@ -31,9 +32,14 @@ async def add_road(
 ):
     db_model = Road(**road.model_dump())
     session.add(db_model)
-    await session.commit()
-    await session.refresh(db_model)
-    return db_model
+    try:
+        await session.commit()
+        await session.refresh(db_model)
+        return db_model
+    except DBAPIError as err:
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE, detail=err.orig.args
+        )
 
 
 @router.delete("/", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
