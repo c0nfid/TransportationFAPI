@@ -1,4 +1,5 @@
 from pydantic import BaseModel, conint
+from datetime import date
 
 
 class SRoadBase(BaseModel):
@@ -7,6 +8,7 @@ class SRoadBase(BaseModel):
     start_point: str
     end_point: str
     id_driver: conint(ge=1)
+    date: date
 
 
 class SRoad(SRoadBase):
