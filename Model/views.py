@@ -3,9 +3,9 @@ from pydantic import conint
 from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
-
+from . import crud
 from Model.crud import get_model_by_id
-from Model.schemas import SModel, SModelBase
+from Model.schemas import SModel, SModelBase, SUpdateModel
 from core.base import db_helper
 from core.base.models import Model
 
@@ -48,3 +48,15 @@ async def del_model(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Model with id {id_model} not found",
         )
+
+
+@router.patch("/{id_model}", response_model=SModel)
+async def update_model(
+    id_model: int,
+    updated_model: SUpdateModel,
+    session: AsyncSession = Depends(db_helper.session_dependency),
+):
+    db_model = await crud.get_model_by_id(session, id_model)
+    if db_model:
+        db_model = await crud.update_model(session, db_model, updated_model)
+    return db_model

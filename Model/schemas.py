@@ -10,3 +10,10 @@ class SModelBase(BaseModel):
 
 class SModel(SModelBase):
     id_model: conint(ge=1)
+
+
+class SUpdateModel(BaseModel):
+    name: str | None = None
+    vendor_country: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
